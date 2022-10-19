@@ -12,6 +12,70 @@ import UIKit
 
 class Confetti: CAEmitterLayer {
 
+    private let colors: [UIColor]
+    private let content: [Content]
+
+    init(colors: [UIColor]?, content: [Content]? = nil) {
+        self.colors = colors ?? [.red, .orange, .yellow, .green]
+        self.content = content ?? [
+            .shape(.circle, 5.0, 5.0),
+            .shape(.square, 5.0, 5.0),
+            .shape(.triangle, 5.0, 5.0)
+        ]
+        super.init()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func emit(in view: UIView, position: Position, duration: CFTimeInterval = 1) {
+        birthRate = 0
+        emitterPosition = position.getPoint(view: view)
+        configure(content: content, position: position)
+        frame = view.bounds
+        beginTime = CACurrentMediaTime()
+        view.layer.addSublayer(self)
+        addBirthrateAnimation(to: self, time: duration)
+    }
+
+    private func configure(content: [Content], position: Position) {
+        var i = 0
+        emitterCells = content.map { content in
+            let cell = CAEmitterCell()
+
+            cell.birthRate = 100.0
+            cell.lifetime = 10.0
+            cell.velocity = 150
+            cell.velocityRange = 100
+            cell.emissionRange = CGFloat(Double.pi)
+            cell.spin = .pi
+            cell.spinRange = .pi * 4
+            cell.scaleRange = 0.25
+            cell.scale = 1.0 - cell.scaleRange
+            cell.contents = content.image.cgImage
+            cell.color = nextColor(i: i)
+            cell.yAcceleration = 150
+
+            i += 1
+            return cell
+        }
+    }
+
+    private func nextColor(i: Int) -> CGColor {
+        colors[i % colors.count].cgColor
+    }
+
+    private func addBirthrateAnimation(to layer: CALayer, time: CFTimeInterval) {
+        let animation = CABasicAnimation()
+        animation.duration = time
+        animation.fromValue = 2
+        animation.toValue = 0
+
+        layer.add(animation, forKey: "birthRate")
+    }
+}
+
+extension Confetti {
+
     enum Content {
         case shape(Shape, CGFloat, CGFloat)
         case image(UIImage)
@@ -78,66 +142,5 @@ class Confetti: CAEmitterLayer {
                 return CGPoint(x: view.bounds.midX, y: view.bounds.midY)
             }
         }
-    }
-
-    private let colors: [UIColor]
-    private let content: [Content]
-
-    init(colors: [UIColor]?, content: [Content]? = nil) {
-        self.colors = colors ?? [.red, .orange, .yellow, .green]
-        self.content = content ?? [
-            .shape(.circle, 5.0, 5.0),
-            .shape(.square, 5.0, 5.0),
-            .shape(.triangle, 5.0, 5.0)
-        ]
-        super.init()
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    func emit(in view: UIView, position: Position, duration: CFTimeInterval = 1) {
-        birthRate = 0
-        emitterPosition = position.getPoint(view: view)
-        configure(content: content, position: position)
-        frame = view.bounds
-        beginTime = CACurrentMediaTime()
-        view.layer.addSublayer(self)
-        addBirthrateAnimation(to: self, time: duration)
-    }
-
-    private func configure(content: [Content], position: Position) {
-        var i = 0
-        emitterCells = content.map { content in
-            let cell = CAEmitterCell()
-
-            cell.birthRate = 100.0
-            cell.lifetime = 10.0
-            cell.velocity = 150
-            cell.velocityRange = 100
-            cell.emissionRange = CGFloat(Double.pi)
-            cell.spin = .pi
-            cell.spinRange = .pi * 4
-            cell.scaleRange = 0.25
-            cell.scale = 1.0 - cell.scaleRange
-            cell.contents = content.image.cgImage
-            cell.color = nextColor(i: i)
-            cell.yAcceleration = 150
-
-            i += 1
-            return cell
-        }
-    }
-
-    private func nextColor(i: Int) -> CGColor {
-        colors[i % colors.count].cgColor
-    }
-
-    private func addBirthrateAnimation(to layer: CALayer, time: CFTimeInterval) {
-        let animation = CABasicAnimation()
-        animation.duration = time
-        animation.fromValue = 2
-        animation.toValue = 0
-
-        layer.add(animation, forKey: "birthRate")
     }
 }
